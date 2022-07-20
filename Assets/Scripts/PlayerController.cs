@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using Random = System.Random;
+
 
 public class PlayerController : MonoBehaviour
 {
@@ -13,9 +15,14 @@ public class PlayerController : MonoBehaviour
     private bool moveBack;
     private GameObject o;
     public float RunSpeed = 5f;
+
+    public Collider CoPlayer;
+    public Collider CoSphere;
+    private bool ground;
+
     void Start()
     {
-         o = GameObject.Find("Sphere");
+        o = GameObject.Find("Sphere");
     }
 
     // Update is called once per frame
@@ -41,22 +48,45 @@ public class PlayerController : MonoBehaviour
         // }
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        ground = true;
+    }
+
+    private void OnCollisionExit(Collision other)
+    {
+        ground = false;
+    }
+
     private void FixedUpdate()
     {
+        Vector3 angel = transform.position - o.transform.position;
+        // transform.Rotate(Quaternion.FromToRotation(transform.up, angel).eulerAngles);
+        transform.rotation = Quaternion.FromToRotation(transform.up, angel) * transform.rotation;
+
+        // RaycastHit hit = new RaycastHit();
+        // CoPlayer.Raycast(new Ray(transform.position, transform.up * -1), out var hit, 10);
+        // Debug.DrawRay(transform.position,transform.up*-1,Color.magenta);
+        // Debug.DrawRay(hit.point,hit.normal,Color.cyan);
+        // Debug.Log("normal= " + hit.normal + "  down=" + transform.up * -1);
+
+        //gravity
+        if (!ground)
+        {
+            body.AddForce(transform.up.normalized * -9.8f, ForceMode.Acceleration);
+            Debug.Log(body.velocity.magnitude);
+            return;
+        }
+
         if (moveForward)
         {
-            body.velocity = transform.forward * RunSpeed;
+            body.velocity = transform.forward * RunSpeed / Time.timeScale;
+            Debug.Log(transform.forward.magnitude);
         }
         else
         {
             body.velocity = Vector3.zero;
         }
-        
-        Vector3 angel = transform.position - o.transform.position;
-        // transform.Rotate(Quaternion.FromToRotation(transform.up, angel).eulerAngles);
-        transform.rotation = Quaternion.FromToRotation(transform.up, angel) * transform.rotation;
-        Debug.Log(Quaternion.FromToRotation(transform.up,angel).eulerAngles.magnitude);
-        body.AddForce(angel * -9.8f);
     }
 
     [Button]
@@ -69,5 +99,7 @@ public class PlayerController : MonoBehaviour
         Debug.DrawLine(transform.position, a2, Color.blue, 10);
         Debug.DrawLine(o.transform.position, transform.position, Color.magenta, 10);
         transform.Rotate(Quaternion.FromToRotation(transform.up, angel.normalized).eulerAngles);
+        
+
     }
 }
